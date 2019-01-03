@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Пример: Расчет стоимости доставки.</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+    <link href="//yandex.st/bootstrap/2.3.2/css/bootstrap.min.css" rel="stylesheet">
+
+    <script src="//yandex.st/jquery/1.8.0/jquery.min.js" type="text/javascript"></script>
+    <script src="//ajax.aspnetcdn.com/ajax/jquery.templates/beta1/jquery.tmpl.js" type="text/javascript"></script>
+    <script src="//api-maps.yandex.ru/2.0/?load=package.full&lang=ru-RU" type="text/javascript"></script>
+    <script src="multi-geocoder.js" type="text/javascript"></script>
+    <script src="delivery-calculator.js" type="text/javascript"></script>
+    <script src="directions-renderer.js" type="text/javascript"></script>
+    <script src="directions-service.js" type="text/javascript"></script>
+    <script src="delivery-tarif.js" type="text/javascript"></script>
+
+    <script type="text/javascript">
+function init() {
+    var myMap = window.map = new ymaps.Map('YMapsID', {
+            center: [59.939095, 30.315868],
+            zoom: 9,
+            behaviors: ['drag', 'scrollZoom']
+        }),
+        searchOrigin = new ymaps.control.SearchControl({
+            useMapBounds: true,
+            noCentering: true,
+            noPlacemark: true
+        }),
+        searchDestination = new ymaps.control.SearchControl({
+            useMapBounds: true,
+            noCentering: true,
+            noPlacemark: true
+        }),
+        tarifs = [{
+            id: 'spb',
+            name: 'Санкт-Петербург',
+            label: 'Маршрут до кад',
+            color: '#0000ff',
+            cost: 0,
+            cost_type: 'full',
+            url: 'spb.json'
+        }
+        // , {
+        //     id: 'cad-5-km',
+        //     name: 'Лен. область',
+        //     label: 'Маршрут 5 км от КАД',
+        //     cost: 300,
+        //     cost_type: 'full',
+        //     color: '#ff0000',
+        //     url: 'mo.json'
+        // }, {
+        //     id: 'cad-5-km-more',
+        //     name: 'Лен. область',
+        //     label: 'Маршрут далее 5 км от КАД',
+        //     cost: 60,
+        //     cost_type: 'per_km',
+        //     color: '#ff0000',
+        //     url: 'mo.json'
+        // }
+            ],
+        calculator = new DeliveryCalculator(myMap, 'Санкт-Петербург, ул. Гончарная, дом 15А', tarifs);
+
+    // myMap.controls.add(searchOrigin, { right: 5, top: 5 });
+    myMap.controls.add(searchDestination, { right: 5, top: 45 });
+
+    // searchOrigin.events.add('resultselect', function (e) {
+    //     var results = searchOrigin.getResultsArray(),
+    //         selected = e.get('resultIndex'),
+    //         point = results[selected].geometry.getCoordinates();
+    //
+    //         calculator.setOrigin(point);
+    // });
+
+    searchDestination.events.add('resultselect', function (e) {
+        var results = searchDestination.getResultsArray(),
+            selected = e.get('resultIndex'),
+            point = results[selected].geometry.getCoordinates();
+
+            calculator.setDestination(point);
+    });
+
+    myMap.events.add('click', function (e) {
+        var position = e.get('coordPosition');
+
+        if(calculator.getOrigin()) {
+            calculator.setDestination(position);
+        }
+        else {
+            calculator.setOrigin(position);
+        }
+    });
+}
+
+ymaps.ready(init);
+
+</script>
+    <style type="text/css">
+        #YMapsID {
+            width: 800px;
+            height: 520px;
+        }
+        .hero-unit {
+            background-color: #FFF;
+        }
+        .well {
+            padding: 15px 0;
+            height: 520px;
+        }
+        .label {
+            cursor: pointer;
+        }
+        #sidebar {
+            height: 520px;
+            overflow: scroll;
+        }
+       .table tbody tr {
+            cursor: pointer;
+        }
+    </style>
+    <!-- Шаблон содержимого сайдбара. -->
+    <script id="sidebarTemplate" type="text/x-jquery-tmpl">
+        <table class="table table-hover table-striped table-bordered table-condensed">
+            <thead>
+                <tr>
+                    <th>Тариф</th>
+                    <th>Длина маршрута</th>
+                    <th>Стоимость доставки</th>
+                </tr>
+            </thead>
+            <tbody>
+            {{each(i, tarif) results}}
+                {{tmpl({
+                    i: i,
+                    tarif: tarif
+                }, {
+                    formatter: $item.formatter
+                }) "#rowTemplate"}}
+            {{/each}}
+            </tbody>
+        </table>
+    </script>
+    <!-- Шаблон тарифа в таблице. -->
+    <script id="rowTemplate" type="text/x-jquery-tmpl">
+        <tr id="${tarif.id}">
+            <td>${tarif.name}</td>
+            <td>${$item.formatter.distance(tarif.distance)}</td>
+            <td>${tarif.value} руб</td>
+        </tr>
+    </script>
+</head>
+<body>
+    <div class="hero-unit">
+        <div class="container-fluid">
+            <div class="row-fluid">
+                <div class="span12">
+                    <p class="lead">Расчет стоимости доставки.</p>
+                </div>
+            </div>
+            <div class="row-fluid">
+                <div id="YMapsID" class="span8"></div>
+                <div id="sidebar" class="span4"></div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
