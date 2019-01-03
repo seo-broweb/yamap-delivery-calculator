@@ -34,31 +34,34 @@ function init() {
         }),
         tarifs = [{
             id: 'spb',
+            type: 'simple',
             name: 'Санкт-Петербург',
             label: 'Маршрут до кад',
-            color: '#0000ff',
+            color: '#0822ff',
             cost: 0,
             cost_type: 'full',
             url: 'spb.json'
-        }
-        // , {
-        //     id: 'cad-5-km',
-        //     name: 'Лен. область',
-        //     label: 'Маршрут 5 км от КАД',
-        //     cost: 300,
-        //     cost_type: 'full',
-        //     color: '#ff0000',
-        //     url: 'mo.json'
-        // }, {
+        }, {
+            id: 'no_spb',
+            type: 'no_spb',
+            name: 'Лен. область',
+            label: 'Маршрут 5 км от КАД',
+            cost: 300,
+            cost_type: 'full',
+            color: '#ff0b21',
+            url: 'spb.json'
+        },
+        //  {
         //     id: 'cad-5-km-more',
+        //     type: 'no_spb',
         //     name: 'Лен. область',
         //     label: 'Маршрут далее 5 км от КАД',
         //     cost: 60,
         //     cost_type: 'per_km',
         //     color: '#ff0000',
-        //     url: 'mo.json'
+        //     url: 'spb.json'
         // }
-            ],
+        ],
         calculator = new DeliveryCalculator(myMap, 'Санкт-Петербург, ул. Гончарная, дом 15А', tarifs);
 
     // myMap.controls.add(searchOrigin, { right: 5, top: 5 });

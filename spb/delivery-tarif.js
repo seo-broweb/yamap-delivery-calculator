@@ -29,8 +29,22 @@ DeliveryTarif.prototype = {
         });
     },
     _contains: function (leg_or_step) {
+        if (this._options.id === 'no_spb') {
+            return !this.geometry.contains(leg_or_step.start_location) ||
+                !this.geometry.contains(leg_or_step.end_location)
+        }
+
         return this.geometry.contains(leg_or_step.start_location) ||
             this.geometry.contains(leg_or_step.end_location);
+    },
+    _getPathFilter : function (point, i, points) {
+        if (this._options.id === 'no_spb') {
+            return !this.geometry.contains(point) ||
+                (points[i - 1] && !this.geometry.contains(points[i - 1]));
+        }
+
+        return this.geometry.contains(point) ||
+            (points[i - 1] && this.geometry.contains(points[i - 1]));
     },
     _getPath: function (route) {
         var flatten = function (a, b) { return a.concat(b); },
@@ -47,8 +61,7 @@ DeliveryTarif.prototype = {
                 })
                 .reduce(flatten)
                 .filter(function (point, i, points) {
-                    return this.geometry.contains(point) ||
-                        (points[i - 1] && this.geometry.contains(points[i - 1]));
+                    return this._getPathFilter(point, i, points);
                 }, this) : [];
 
         return path;
@@ -59,6 +72,23 @@ DeliveryTarif.prototype = {
         return path.reduce(function (distance, point, index, points) {
             return distance + coordSystem.getDistance(points[index - 1] || point, point);
         }, 0);
+    },
+
+    _getDistanceCost: function (distance) {
+        var cost = distance / 1000 * this._options.cost
+        if (this._options.id === 'no_spb') {
+            var cost_no_spb_5_km = 300;
+            var cost_no_spb_more_5_km = 60;
+
+            if (distance == 0) {
+                cost = 0
+            } else if (distance / 1000 <= 5) {
+                cost = cost_no_spb_5_km
+            } else {
+                cost = cost_no_spb_5_km + (distance - 5000)/1000 * cost_no_spb_more_5_km
+            }
+        }
+        return Math.floor(cost)
     },
     setMap: function (map) {
         this._map = map;
@@ -75,7 +105,7 @@ DeliveryTarif.prototype = {
 
         return ymaps.util.extend({
             distance: Math.floor(distance),
-            value: Math.floor(distance / 1000 * this._options.cost)
+            value: this._getDistanceCost(distance)
         }, this._options);
     },
     render: function (path) {
